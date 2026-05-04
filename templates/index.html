@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>MorphTrap Dashboard</title>
+    <meta http-equiv="refresh" content="5">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: #e5e7eb;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #38bdf8;
+        }
+
+        .cards {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 12px;
+            width: 33%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #1e293b;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #334155;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background: #020617;
+            color: #38bdf8;
+        }
+
+        code {
+            color: #f8fafc;
+        }
+
+        .Reconnaissance {
+            color: #38bdf8;
+        }
+
+        .Exfiltration {
+            color: #f87171;
+        }
+
+        .Persistence {
+            color: #facc15;
+        }
+
+        .Exploitation {
+            color: #c084fc;
+        }
+
+        .Other {
+            color: #94a3b8;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>MorphTrap Live Honeypot Dashboard</h1>
+
+    <div class="cards">
+        <div class="card">
+            <h2>Threat Breakdown</h2>
+            {% for intent, count in intent_counts %}
+            <p><b class="{{ intent }}">{{ intent }}</b>: {{ count }}</p>
+            {% endfor %}
+        </div>
+
+        <div class="card">
+            <h2>Top Commands</h2>
+            {% for command, count in top_commands %}
+            <p><code>{{ command }}</code> — {{ count }}</p>
+            {% endfor %}
+        </div>
+
+        <div class="card">
+            <h2>System Status</h2>
+            <p>Mode: Safe Fake Linux Shell</p>
+            <p>Execution: Disabled</p>
+            <p>Refresh: Every 5 seconds</p>
+        </div>
+    </div>
+
+    <h2>Live Command Feed</h2>
+
+    <table>
+        <tr>
+            <th>Time</th>
+            <th>Session</th>
+            <th>IP</th>
+            <th>Command</th>
+            <th>Intent</th>
+            <th>Fake Response</th>
+        </tr>
+
+        {% for event in events %}
+        <tr>
+            <td>{{ event[0] }}</td>
+            <td>{{ event[1] }}</td>
+            <td>{{ event[2] }}</td>
+            <td><code>{{ event[3] }}</code></td>
+            <td class="{{ event[4] }}"><b>{{ event[4] }}</b></td>
+            <td><code>{{ event[5][:70] }}</code></td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+
+</html>
