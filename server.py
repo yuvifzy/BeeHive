@@ -6,7 +6,7 @@ import paramiko
 import uuid
 from logger import log_event
 
-HOST_KEY = paramiko.RSAKey.generate(2048)
+HOST_KEY = paramiko.RSAKey(filename="host_key")
 
 
 class SSHServer(paramiko.ServerInterface):
