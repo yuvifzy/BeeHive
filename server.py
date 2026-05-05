@@ -1,5 +1,5 @@
 # server.py
-
+import re
 import socket
 import threading
 import paramiko
@@ -60,14 +60,14 @@ def fake_response(command, session_id):
     elif lower.startswith("cat "):
         filename = command[4:].strip()
 
-        if filename == "/etc/passwd":
+        if "passwd" in lower:
             return (
                 "root:x:0:0:root:/root:/bin/bash\n"
                 "ubuntu:x:1000:1000:ubuntu:/home/ubuntu:/bin/bash\n"
                 "mysql:x:112:118:MySQL Server:/nonexistent:/bin/false\n"
             )
 
-        return read_file(session_id, filename)
+        return f"cat: {filename}: Permission denied\n"
 
     elif "wget" in lower or "curl" in lower:
         return "Connecting... 200 OK\nSaved file to /tmp/payload.sh\n"
@@ -128,6 +128,10 @@ def handle_client(client, address):
                 channel.send(char)
 
             command = command.strip()
+
+            command = command.encode("utf-8", "ignore").decode("utf-8").strip()
+            command = re.sub(r"[^a-zA-Z0-9 /._:-]", "", command)
+
             response = fake_response(command, session_id)
 
             if response == "exit":
