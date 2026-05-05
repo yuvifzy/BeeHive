@@ -1,5 +1,6 @@
 from flask import Flask, render_template
 from logger import get_recent_events, get_intent_counts, get_top_commands
+from logger import get_attacker_profile
 
 app = Flask(__name__)
 
@@ -8,12 +9,14 @@ def index():
     events = get_recent_events(30)
     intent_counts = get_intent_counts()
     top_commands = get_top_commands(5)
+    profile = get_attacker_profile()
 
     return render_template(
         "index.html",
         events=events,
         intent_counts=intent_counts,
-        top_commands=top_commands
+        top_commands=top_commands,
+        profile=profile
     )
 
 if __name__ == "__main__":

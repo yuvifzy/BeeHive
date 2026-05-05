@@ -91,5 +91,34 @@ def get_top_commands(limit=5):
     conn.close()
     return rows
 
+def get_attacker_profile():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT intent FROM events ORDER BY id ASC
+    """)
+    intents = [row[0] for row in cursor.fetchall()]
+
+    conn.close()
+
+    if "Exploitation" in intents and "Persistence" in intents:
+        return {
+            "type": "Advanced Attacker",
+            "skill": "High",
+            "behavior": "Privilege escalation + persistence attempts"
+        }
+    elif "Exfiltration" in intents:
+        return {
+            "type": "Data Harvester",
+            "skill": "Medium",
+            "behavior": "Sensitive data extraction"
+        }
+    else:
+        return {
+            "type": "Recon Scanner",
+            "skill": "Low",
+            "behavior": "Basic system probing"
+        }
 
 init_db()
