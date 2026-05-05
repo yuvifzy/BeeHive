@@ -1,10 +1,12 @@
 # server.py
-
+import re
 import socket
 import threading
 import paramiko
 import uuid
 from logger import log_event
+from gemini_engine import generate_fake_files, list_files, read_file
+from classifier import classify_command
 
 HOST_KEY = paramiko.RSAKey(filename="host_key")
 
@@ -31,50 +33,58 @@ class SSHServer(paramiko.ServerInterface):
         return True
 
 
-def fake_response(command):
-    command = command.strip().lower()
+def fake_response(command, session_id):
+    command = command.strip()
+    lower = command.lower()
 
-    if command == "whoami":
+    intent = classify_command(command)
+
+    if lower not in ["", "ls", "ls -la"]:
+        generate_fake_files(session_id, command, intent)
+
+    if lower == "whoami":
         return "ubuntu\n"
 
-    elif command == "pwd":
+    elif lower == "pwd":
         return "/home/ubuntu\n"
 
-    elif command == "ls":
-        return "backup  logs  config  server.py\n"
+    elif lower in ["ls", "ls -la"]:
+        return list_files(session_id)
 
-    elif command == "id":
+    elif lower == "id":
         return "uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu),27(sudo)\n"
 
-    elif command == "uname -a":
+    elif lower == "uname -a":
         return "Linux prod-server 5.15.0-91-generic x86_64 GNU/Linux\n"
 
-    elif command == "cat /etc/passwd":
-        return (
-            "root:x:0:0:root:/root:/bin/bash\n"
-            "ubuntu:x:1000:1000:ubuntu:/home/ubuntu:/bin/bash\n"
-            "mysql:x:112:118:MySQL Server:/nonexistent:/bin/false\n"
-        )
+    elif lower.startswith("cat "):
+        filename = command[4:].strip()
 
-    elif command.startswith("cat"):
-        return "Permission denied\n"
+        if "passwd" in lower:
+            return (
+                "root:x:0:0:root:/root:/bin/bash\n"
+                "ubuntu:x:1000:1000:ubuntu:/home/ubuntu:/bin/bash\n"
+                "mysql:x:112:118:MySQL Server:/nonexistent:/bin/false\n"
+            )
 
-    elif "wget" in command or "curl" in command:
+        return f"cat: {filename}: Permission denied\n"
+
+    elif "wget" in lower or "curl" in lower:
         return "Connecting... 200 OK\nSaved file to /tmp/payload.sh\n"
 
-    elif "chmod +x" in command:
+    elif "chmod +x" in lower:
         return ""
 
-    elif "crontab" in command:
+    elif "crontab" in lower:
         return "no crontab for ubuntu\n"
 
-    elif "sudo" in command:
+    elif "sudo" in lower:
         return "ubuntu is not in the sudoers file. This incident will be reported.\n"
 
-    elif command in ["exit", "quit"]:
+    elif lower in ["exit", "quit"]:
         return "exit"
 
-    elif command == "":
+    elif lower == "":
         return ""
 
     else:
@@ -118,7 +128,11 @@ def handle_client(client, address):
                 channel.send(char)
 
             command = command.strip()
-            response = fake_response(command)
+
+            command = command.encode("utf-8", "ignore").decode("utf-8").strip()
+            command = re.sub(r"[^a-zA-Z0-9 /._:-]", "", command)
+
+            response = fake_response(command, session_id)
 
             if response == "exit":
                 channel.send("logout\r\n")

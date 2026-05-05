@@ -10,7 +10,7 @@ def classify_command(command):
         return "Reconnaissance"
 
     # --- Exfiltration ---
-    elif re.search(r"(cat\s+/etc/passwd|scp|curl|wget)", command):
+    elif re.search(r"(passwd|scp|curl|wget)", command):
         return "Exfiltration"
 
     # --- Persistence ---
